@@ -16,6 +16,8 @@ TARGET_CHANNEL = int(os.getenv("TARGET_CHANNEL_ID"))
 TEMP_DIR = "temp"
 os.makedirs(TEMP_DIR, exist_ok=True)
 
+COOKIE_FILE = "cookies.txt"   # <<< COOKIE TIKTOK
+
 # ================= CLIENT =================
 client = TelegramClient("session", API_ID, API_HASH)
 
@@ -29,15 +31,30 @@ def load_hashtags():
         return ""
     with open("hashtag.txt", "r", encoding="utf-8") as f:
         tags = [x.strip() for x in f if x.strip()]
+    # hashtag melebar (1 baris)
     return "\n\n" + " ".join(tags)
 
+# ================= DOWNLOAD =================
 def download_video(url):
     ydl_opts = {
         "outtmpl": f"{TEMP_DIR}/%(id)s.%(ext)s",
         "format": "mp4",
+        "merge_output_format": "mp4",
         "quiet": True,
-        "no_warnings": True
+        "no_warnings": True,
+
+        # ===== FIX TIKTOK VPS =====
+        "cookiefile": COOKIE_FILE,
+        "extractor_args": {
+            "tiktok": {
+                "app": "android"
+            }
+        },
+        "http_headers": {
+            "User-Agent": "com.ss.android.ugc.trill/494+Android"
+        }
     }
+
     with yt_dlp.YoutubeDL(ydl_opts) as ydl:
         info = ydl.extract_info(url, download=True)
         filename = ydl.prepare_filename(info)
